@@ -1,49 +1,73 @@
+import google.generativeai as genai
 import streamlit as st
-from google import genai
-from PIL import Image
 
-# पेज की सेटिंग
-st.set_page_config(page_title="Master Sheet Photo Reader", page_icon="📊", layout="centered")
+st.set_page_config(page_title="Master Sheet Photo & SMS Reader", page_icon="📊")
 
-st.title("📊 Master Sheet Photo Reader App")
-st.write("अपनी पर्ची या चार्ट की फोटो यहाँ अपलोड करें, यह ऐप तुरंत **Jodi = Amount** फॉर्मेट और कुल टोटल बना देगा।")
+st.title("📊 Master Sheet Photo & SMS Reader App")
+st.write(
+    "Yahan aap ya toh apni parchiyan/chart ki **photo upload** karein ya fir **SMS ka text paste** karein, yeh app turant *Jodi = Amount* format aur total bana dega."
+)
 
-# साइडबार या इनपुट में API Key लें
-api_key = st.sidebar.text_input("अपनी Gemini API Key दर्ज करें:", type="password")
+# Sidebar ya Main area mein API Key input
+api_key = st.text_input("अपनी Gemini API Key दर्ज करें:", type="password")
 
-# इमेज अपलोड करने का ऑप्शन
-uploaded_file = st.file_uploader("पर्ची या चार्ट की फोटो चुनें (JPG/PNG)", type=["jpg", "jpeg", "png"])
+if api_key:
+  genai.configure(api_key=api_key)
+  # Model setup (Gemini 2.5 Flash ya jo aap use kar rahe hain)
+  model = genai.GenerativeModel("gemini-2.5-flash")
 
-if uploaded_file is not None:
-    image = Image.open(uploaded_file)
-    st.image(image, caption="अपलोड की गई पर्ची", use_container_width=True)
-    
-    if st.button("🚀 मास्टर शीट बनाएं (Process)"):
-        if not api_key:
-            st.error("⚠️ कृपया पहले बाईं ओर (Sidebar में) अपनी Gemini API Key दर्ज करें।")
-        else:
-            with st.spinner("फोटो को पढ़ा जा रहा है... कृपया प्रतीक्षा करें..."):
-                try:
-                    # Gemini Client इनिशियलाइज करें
-                    client = genai.Client(api_key=api_key)
-                    
-                    prompt = """
-                    इस इमेज में हाथ से लिखे हुए या प्रिंटेड नंबरों (जोड़ी/Jodi) और उनके सामने लिखे अमाउंट को ध्यान से पढ़ें।
-                    इसे केवल नीचे दिए गए फॉर्मेट में साफ़-सुथरी लिस्ट बनाकर दें:
-                    * **Jodi** = Amount
-                    
-                    और अंत में इसका कुल योग (Total Amount) जरूर लिखें।
-                    """
-                    
-                    # यहाँ मॉडल का नाम अपडेट कर दिया गया है
-                    response = client.models.generate_content(
-                        model='gemini-3.8-flash',
-                        contents=[image, prompt]
-                    )
-                    
-                    st.success("✨ मास्टर शीट सफलतापूर्वक तैयार हो गई है!")
-                    st.markdown("### 📋 परिणाम (Master Sheet):")
-                    st.markdown(response.text)
-                    
-                except Exception as e:
-                    st.error(f"त्रुटि (Error) आई: {e}")
+  # Input Type Selection (Photo ya SMS Text)
+  input_type = st.radio(
+    "Kiska use karna chahte hain?", ("Photo Upload (JPG/PNG)", "SMS Text Paste")
+  )
+
+  if input_type == "Photo Upload (JPG/PNG)":
+    uploaded_file = st.file_uploader(
+      "पर्ची या चार्ट की फोटो चुनें", type=["jpg", "jpeg", "png"]
+    )
+
+    if uploaded_file is not None:
+      st.image(uploaded_file, caption="Upload ki gayi photo", use_column_width=True)
+
+      if st.button("Read Photo & Generate Sheet"):
+        with st.spinner("Processing image..."):
+          bytes_data = uploaded_file.getvalue()
+          image_part = {
+              "mime_type": uploaded_file.type,
+              "data": bytes_data,
+          }
+
+          prompt = (
+              "Is image mein di gayi jodi aur amount ko padhein. Isko"
+              " 'Jodi = Amount' ke format mein saaf-saaf likhein aur aakhir mein"
+              " sabhi amounts ka total (kul jod) bhi batayein."
+          )
+
+          response = model.generate_content([image_part, prompt])
+          st.subheader("Master Sheet Result:")
+          st.write(response.text)
+
+  else:
+    sms_text = st.text_area(
+        "Yahan apna SMS text paste karein:",
+        placeholder="Apna message yahan daalein...",
+    )
+
+    if st.button("Read SMS & Generate Sheet"):
+      if sms_text.strip() != "":
+        with st.spinner("Processing SMS..."):
+          prompt = (
+              "Is SMS text mein diye gaye numbers/jodi aur amount ko padhein."
+              " Isko 'Jodi = Amount' ke format mein saaf-saaf likhein aur"
+              " aakhir mein sabhi amounts ka total (kul jod) bhi batayein."
+              f"\n\nSMS Text:\n{sms_text}"
+          )
+
+          response = model.generate_content(prompt)
+          st.subheader("Master Sheet Result:")
+          st.write(response.text)
+      else:
+        st.warning("Kripya pehle SMS text enter karein.")
+
+else:
+  st.warning("Kripya aage badhne ke liye apni Gemini API Key darj karein.")
