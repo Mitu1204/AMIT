@@ -11,15 +11,19 @@ st.write(
     " se chat karke command dein!"
 )
 
-# Sidebar ya Main section me API Key input
+# API Key Input
 api_key = st.text_input(
     "अपनी Gemini API Key दर्ज करें:", type="password", key="gemini_api_key"
 )
 
 if api_key:
   genai.configure(api_key=api_key)
-  # Sahi aur working model initialize kiya gaya hai
-  model = genai.GenerativeModel("gemini-1.5-flash")
+
+  # Model ko update karke check kiya gaya hai
+  try:
+    model = genai.GenerativeModel("gemini-2.5-flash")
+  except Exception:
+    model = genai.GenerativeModel("gemini-1.5-flash")
 
   st.divider()
 
@@ -71,21 +75,39 @@ if api_key:
       " de sakte hain ya baat kar sakte hain."
   )
 
-  if "chat_history" not in st.session_state:
-    st.session_state.chat = model.start_chat(history=[])
+  if "messages" not in st.session_state:
+    st.session_state.messages = []
 
-  for message in st.session_state.chat.history:
-    with st.chat_message("user" if message.role == "user" else "model"):
-      st.markdown(message.parts[0].text)
+  # Purani chat messages dikhane ke liye
+  for message in st.session_state.messages:
+    with st.chat_message(message["role"]):
+      st.markdown(message["content"])
 
+  # Naya user input
   if user_prompt := st.chat_input("Yahan apni command likhein..."):
+    st.session_state.messages.append({"role": "user", "content": user_prompt})
     with st.chat_message("user"):
       st.markdown(user_prompt)
 
-    with st.chat_message("model"):
+    with st.chat_message("assistant"):
       with st.spinner("Soch raha hu..."):
-        response = st.session_state.chat.send_message(user_prompt)
-        st.markdown(response.text)
+        try:
+          # Safe chat generation using standard generate_content with history
+          chat_history_text = ""
+          for msg in st.session_state.messages[:-1]:
+            chat_history_text += f"{msg['role']}: {msg['content']}\n"
+
+          full_prompt = (
+              f"{chat_history_text}user: {user_prompt}\nassistant:"
+          )
+          response = model.generate_content(full_prompt)
+          bot_reply = response.text
+          st.markdown(bot_reply)
+          st.session_state.messages.append(
+              {"role": "assistant", "content": bot_reply}
+          )
+        except Exception as e:
+          st.error(f"Error: {e}")
 
 else:
   st.warning(
