@@ -18,20 +18,22 @@ api_key = st.text_input(
 
 if api_key:
   genai.configure(api_key=api_key)
-  model = genai.GenerativeModel("gemini-1.5-flash")
+  # Model name updated here
+  model = genai.GenerativeModel("gemini-2.5-flash")
 
   st.divider()
 
   # ----------------- SECTION 1: PHOTO & SMS READER -----------------
   st.subheader("📁 Reader Mode (Photo & SMS)")
   task_type = st.radio(
-    "Kiska use karna chahte hain?",
-    ("Photo Upload (JPG/PNG)", "SMS Text Paste"),
+      "Kiska use karna chahte hain?",
+      ("Photo Upload (JPG/PNG)", "SMS Text Paste"),
   )
 
   if task_type == "Photo Upload (JPG/PNG)":
     uploaded_file = st.file_uploader(
-      "Apni parchiyon ya chart ki photo upload karein", type=["jpg", "jpeg", "png"]
+        "Apni parchiyon ya chart ki photo upload karein",
+        type=["jpg", "jpeg", "png"],
     )
     if uploaded_file and st.button("Read Photo & Generate Sheet"):
       with st.spinner("Photo read ki ja rahi hai..."):
@@ -47,8 +49,8 @@ if api_key:
 
   else:
     sms_text = st.text_area(
-      "Yahan apna SMS text paste karein:",
-      placeholder="Yahan SMS paste karein...",
+        "Yahan apna SMS text paste karein:",
+        placeholder="Yahan SMS paste karein...",
     )
     if sms_text and st.button("Read SMS & Generate Sheet"):
       with st.spinner("SMS read kiya ja raha hai..."):
@@ -65,17 +67,15 @@ if api_key:
   # ----------------- SECTION 2: CHAT COMMAND INTERFACE -----------------
   st.subheader("💬 Gemini Chat & Command Mode")
   st.write(
-    "Jaise aap mujhse chat karte hain, waise hi yahan likh kar koi bhi command"
-    " de sakte hain ya baat kar sakte hain."
+      "Jaise aap mujhse chat karte hain, waise hi yahan likh kar koi bhi command"
+      " de sakte hain ya baat kar sakte hain."
   )
 
   if "chat_history" not in st.session_state:
     st.session_state.chat = model.start_chat(history=[])
 
   for message in st.session_state.chat.history:
-    with st.chat_message(
-        "user" if message.role == "user" else "model"
-    ):
+    with st.chat_message("user" if message.role == "user" else "model"):
       st.markdown(message.parts[0].text)
 
   if user_prompt := st.chat_input("Yahan apni command likhein..."):
@@ -89,6 +89,6 @@ if api_key:
 
 else:
   st.warning(
-    "Kripya upar apni valid Gemini API Key darj karein taaki app kaam kar"
-    " sake."
+      "Kripya upar apni valid Gemini API Key darj karein taaki app kaam kar"
+      " sake."
   )
