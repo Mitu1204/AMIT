@@ -19,9 +19,9 @@ api_key = st.text_input(
 if api_key:
   genai.configure(api_key=api_key)
 
-  # Model ko update karke check kiya gaya hai
+  # Sahi model name set kiya gaya hai
   try:
-    model = genai.GenerativeModel("gemini-2.5-flash")
+    model = genai.GenerativeModel("gemini-3.8-flash")
   except Exception:
     model = genai.GenerativeModel("gemini-1.5-flash")
 
@@ -92,7 +92,6 @@ if api_key:
     with st.chat_message("assistant"):
       with st.spinner("Soch raha hu..."):
         try:
-          # Safe chat generation using standard generate_content with history
           chat_history_text = ""
           for msg in st.session_state.messages[:-1]:
             chat_history_text += f"{msg['role']}: {msg['content']}\n"
