@@ -18,8 +18,8 @@ api_key = st.text_input(
 
 if api_key:
   genai.configure(api_key=api_key)
-  # Model name updated here
-  model = genai.GenerativeModel("gemini-2.5-flash")
+  # Sahi aur working model initialize kiya gaya hai
+  model = genai.GenerativeModel("gemini-1.5-flash")
 
   st.divider()
 
