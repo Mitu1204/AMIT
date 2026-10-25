@@ -17,9 +17,9 @@ api_key = st.text_input("अपनी Gemini API Key दर्ज करें:"
 if api_key:
   genai.configure(api_key=api_key)
 
-  # Model setup (Gemini 1.5 Flash - stable aur fast model)
+  # Model setup (Updated model name)
   try:
-    model = genai.GenerativeModel("gemini-1.5-flash")
+    model = genai.GenerativeModel("gemini-2.5-flash")
   except Exception as e:
     model = genai.GenerativeModel("gemini-1.5-pro")
 
